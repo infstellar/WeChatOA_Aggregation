@@ -8,7 +8,7 @@
 
 from tqdm import tqdm
 from request_.wechat_request import WechatRequest, time_delta, time_now
-from util.message2md import message2md, message2md_byname
+from util.message2md import message2md, single_message2md
 from util.util import handle_json
 from util.filter_duplication import minHashLSH
 
@@ -48,4 +48,4 @@ if __name__ == '__main__':
 
     # 将message_info转换为md上传到个人博客系统
     message2md(message_info)
-    message2md_byname(message_info)
+    single_message2md(message_info)

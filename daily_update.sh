@@ -11,21 +11,14 @@ else
 fi
 
 echo "上传md文件中ing"
-SOURCE_PATH="D:\learning\python\WeChatOA_Aggregation\data\微信公众号聚合平台.md"
+SOURCE_PATH1="D:\learning\python\WeChatOA_Aggregation\data\微信公众号聚合平台_按时间区分.md"
+SOURCE_PATH2="D:\learning\python\WeChatOA_Aggregation\data\微信公众号聚合平台_按公众号区分.md"
 TARGET_PATH="D:\learning\zejun'blog\Hexo\source\_posts"
 
 # 检查目标路径是否存在，如果不存在，则打印错误并退出
 if test -d "$TARGET_PATH"; then
-    cp $SOURCE_PATH $TARGET_PATH
-else
-    echo "目标路径不存在: $TARGET_PATH"
-    exit 1
-fi
-
-SOURCE_PATH="D:\learning\python\WeChatOA_Aggregation\data\微信公众号聚合平台_byname.md"
-TARGET_PATH="D:\learning\zejun'blog\Hexo\source\_posts"
-if test -d "$TARGET_PATH"; then
-    cp $SOURCE_PATH $TARGET_PATH
+    cp $SOURCE_PATH1 $TARGET_PATH
+    cp $SOURCE_PATH2 $TARGET_PATH
 else
     echo "目标路径不存在: $TARGET_PATH"
     exit 1

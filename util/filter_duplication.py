@@ -107,12 +107,12 @@ def calc_duplicate_rate1(text_list1, text_list2):
     return co_rate
 
 def calc_duplicate_rate_max(text_list1, text_list2):
+    # 重复字数判断，调换顺序计算两次
     dup_rate = max([calc_duplicate_rate1(text_list1, text_list2), calc_duplicate_rate1(text_list2, text_list1)])
+    # 再次计算bleu值
     if dup_rate < 0.8:
-
         dup_rate = max(dup_rate, sentence_bleu([list(''.join(text_list1))], list(''.join(text_list2))))
     return dup_rate
-
 
 def get_filtered_message():
     generate_title_head()
@@ -160,7 +160,6 @@ def get_filtered_message():
     handle_json('dup_message', data=duplicate_message)
     handle_json('delete_message', data=delete_messages)
 
-
 # 以message_info文件生成title_head文件
 def generate_title_head():
     message_info = handle_json('message_info')
@@ -190,7 +189,6 @@ def generate_title_head():
         v['links'].sort(key=lambda x: x['create_time'])
         title_head[k]['co_count'] = len(v['links'])
     handle_json('title_head', data=title_head)
-
 
 # 暂时弃用
 class UpstashVector:
@@ -293,15 +291,16 @@ class minHashLSH:
             self.issues_message['dup_minhash'] = {}
 
         self.delete_messages_set = set(self.issues_message['is_delete'])
+        self.message_detail_text = handle_json('message_detail_text')
 
         # 加载minhash签名缓存文件
         self.minhash_dict_path = Path(__file__).parent.parent / 'data' / 'minhash_dict.pickle'
+        # minhash_dict 字典记录所有id的minhash签名，key: id, value: minhash签名
         if self.minhash_dict_path.exists():
             with open(self.minhash_dict_path, 'rb') as fp:
-                self.minhash_dict = pickle.load(fp)
-
+                self.minhash_dict = pickle.load(fp)  # 此时v是minhash签名的hash值(数组)
             for k, v in self.minhash_dict.items():
-                self.minhash_dict[k] = MinHash(hashvalues=v)
+                self.minhash_dict[k] = MinHash(hashvalues=v)  # 将其转换为MinHash对象
         else:
             self.minhash_dict = {}
 
@@ -315,9 +314,11 @@ class minHashLSH:
                          and m['create_time'] > "2024-07-01"]
         message_total.sort(key=lambda x: x['create_time'])
         for i, m in tqdm(enumerate(message_total), total=len(message_total)):
-            text_list = ''  # 防止后面用到
+            # 如果文章没有minhash编码，则进行minhash编码
             if m['id'] not in self.minhash_dict.keys():
-                text_list = url2text(m['link'])
+                if m['id'] not in self.message_detail_text:
+                    self.message_detail_text[m['id']] = url2text(m['link'])
+                text_list = self.message_detail_text[m['id']]
                 if self.is_delete(text_list, m['id']): continue
                 text_list = ' '.join(text_list)
                 text_list = self.split_text(text_list)
@@ -339,8 +340,8 @@ class minHashLSH:
                     if self.minhash_dict[m['id']].jaccard(self.minhash_dict[s]) >= 0.9:  # .jaccard会和MinHashLSH计算的有点差异
                         sim_m_res.append(s)
                     else:
-                        if not text_list: text_list = url2text(m['link'])
                         dup_rate = calc_duplicate_rate_max(text_list, url2text(id2url[s]))
+                        # 规则大于0.7则认为是重复的
                         if dup_rate > 0.7:
                             sim_m_res.append(s)
                 if sim_m_res:
@@ -349,6 +350,7 @@ class minHashLSH:
                     }
             else:
                 self.lsh.insert(m['id'], self.minhash_dict[m['id']])
+        handle_json('message_detail_text', data=self.message_detail_text)
 
     def is_delete(self, text_list, id_):
         if text_list in ['已删除']:
@@ -402,7 +404,6 @@ class minHashLSH:
         handle_json('issues_message', data=self.issues_message)
         # 返回 True 表示异常已被处理，不会向外传播
         # return True
-
 
 if __name__ == '__main__':
     # url1 = 'http://mp.weixin.qq.com/s?__biz=MzkxMzUxNzEzMQ==&mid=2247488093&idx=1&sn=4c61d43fd3e6e57f632f1fe2c29ab59e&chksm=c17d2d79f60aa46f13db4861aa9fd16eb9010759e2cd6a5887a574333badba95975f32e19e98#rd'

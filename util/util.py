@@ -64,6 +64,29 @@ def handle_json(file_name, data=None):
         shutil.move('tmp.json', file_name)
 
 
+def check_text_ratio(text):
+    """检测文本中英文和符号的占比
+    Args:
+        text: 输入文本字符串
+    Returns: 英文字符占比和符号占比
+    """
+    # 统计字符数
+    total_chars = len(text)
+    if total_chars == 0:
+        return 0, 0
+
+    # 统计英文字符
+    english_chars = sum(1 for c in text if c.isascii() and c.isalpha())
+
+    # 统计符号 (不包括空格)
+    symbols = sum(1 for c in text if not c.isalnum() and not c.isspace())
+
+    # 计算占比
+    english_ratio = english_chars / total_chars
+    symbol_ratio = symbols / total_chars
+
+    return english_ratio, symbol_ratio
+
 
 if __name__ == '__main__':
     update_message_info()
