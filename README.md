@@ -1,6 +1,9 @@
 # WeChatOA_Aggregation
 微信公众号聚合平台，获取多个公众号的博文进行筛选、过滤，使用户更方便的读取公众号上的所有文章
 
+![blog_preview.png](figures/blog_preview.png)
+
+
 ## 关于token和cookie
 进入微信公众平台，扫码登录后在网页地址栏最后面就可以看到`token=xxxxxxxxx`，
 此时按F12点Network监控网络请求，选中Fetch/XHR，刷新一下网页，随便点击一个请求就可以找到Cookie字段
