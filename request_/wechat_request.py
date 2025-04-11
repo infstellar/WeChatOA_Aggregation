@@ -47,13 +47,11 @@ class WechatRequest:
 
         nickname = {}
         url = 'https://mp.weixin.qq.com/cgi-bin/searchbiz?'
-        # 避免请求频率过高
-        while True:
-            response = requests.get(url=url, params=params, headers=self.headers).json()
-            if response['base_resp']['err_msg'] == 'ok':
-                break
-            else:
-                time.sleep(0.1)
+        response = requests.get(url=url, params=params, headers=self.headers).json()
+        if self.session_is_overdue(response):
+            params['token'] = self.token
+            response = requests.get(url=url, params=params, headers=headers).json()
+            self.session_is_overdue(response)
         for l in response['list']:
             nickname[l['nickname']] = l['fakeid']
         if name in nickname.keys():
