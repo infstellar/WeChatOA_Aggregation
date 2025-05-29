@@ -6,30 +6,26 @@
 # @Software    : Pycharm
 # @description : 将微信公众号聚合平台数据转换为markdown文件，上传博客平台
 
+import datetime
 import os
 import re
-import sys
-from pathlib import Path
-import datetime
-import requests
-from tqdm import tqdm
-from PIL import Image
 from collections import defaultdict
+from pathlib import Path
 
-# 调试用，执行当前文件时防止路径导入错误
-if sys.argv[0] == __file__:
-    from util import handle_json, check_text_ratio, headers
-else:
-    from .util import handle_json, check_text_ratio, headers
+import requests
+from PIL import Image
+from tqdm import tqdm
+
+from .util import check_text_ratio, headers, nunjucks_escape, read_json
 
 
 def get_valid_message(message_info=None):
     if not message_info:
-        message_info = handle_json('message_info')
+        message_info = read_json('message_info')
 
-    name2fakeid = handle_json('name2fakeid')
-    issues_message = handle_json('issues_message')
-    delete_messages_set = set(issues_message['is_delete'])
+    name2fakeid = read_json('name2fakeid')
+    issues_message = read_json('issues_message')
+    delete_messages_set = set(issues_message['is_delete']) if issues_message else set()
 
     delete_count = 0
     dup_count = 0
@@ -118,9 +114,9 @@ tags:
 
 def single_message2md(message_info=None):
     if not message_info:
-        message_info = handle_json('message_info')
+        message_info = read_json('message_info')
     md_dict_by_date, _ = get_valid_message(message_info)
-    message_detail_text = handle_json('message_detail_text')
+    message_detail_text = read_json('message_detail_text')
     # hexo路径
     img_path = r"D:\learning\zejun'blog\Hexo\themes\hexo-theme-matery\source\medias\frontcover"
     md_path = r"D:\learning\zejun'blog\Hexo\source\_posts"
@@ -186,25 +182,18 @@ top: false
 hide: false
 img: /medias/frontcover/{_id.replace('/', '_')}.jpg
 tags: 
-    - 开源项目
-    - 微信公众号聚合平台
     - {d['oaname']}
 ---
 '''
+    # - 开源项目
+    # - 微信公众号聚合平台
         md += f'[{d["title"]}]({d["link"]})\n\n'
         md += '> 仅用于站内搜索，没有排版格式，具体信息请跳转上方微信公众号内链接\n\n'
         all_text = message_detail_text[_id]
         all_text = [all_text] if isinstance(all_text, str) else all_text
         for i in range(len(all_text)):
             # 替换一些字符，防止 Nunjucks 转义失败
-            all_text[i] = all_text[i].replace('{{', '{ {')
-            all_text[i] = all_text[i].replace('https:', 'https :')
-            all_text[i] = all_text[i].replace('http:', 'http :')
-            all_text[i] = all_text[i].replace('{#', '{ #')
-            for ext in ['.png', '.jpg', '.jpeg', '.gif', '.bmp']:
-                all_text[i] = all_text[i].replace(ext, '')
-            # 去掉html标签，防止转义失败
-            all_text[i] = re.sub(r'<[^>]*>', '', all_text[i])
+            all_text[i] = nunjucks_escape(all_text[i])
             # 去掉大段代码
             if len(all_text[i]) > 100 and sum(check_text_ratio(all_text[i])) > 0.5:
                 all_text[i] = ""
@@ -227,8 +216,3 @@ tags:
     for filename in os.listdir(img_path):
         if filename[:-4] not in valid_id:
             os.remove(os.path.join(img_path, filename))
-
-
-if __name__ == '__main__':
-    single_message2md()
-    message2md()

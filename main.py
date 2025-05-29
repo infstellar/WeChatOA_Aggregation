@@ -7,16 +7,16 @@
 # @description : 主程序，爬取文章并存储
 
 from tqdm import tqdm
-from request_.wechat_request import WechatRequest, time_delta, time_now
+from request_.wechat_request import WechatRequest
 from util.message2md import message2md, single_message2md
-from util.util import handle_json
+from util.util import read_json, write_json, time_delta, time_now
 from util.filter_duplication import minHashLSH
 
 
 if __name__ == '__main__':
     # 获取必要信息
-    name2fakeid_dict = handle_json('name2fakeid')
-    message_info = handle_json('message_info')
+    name2fakeid_dict = read_json('name2fakeid')
+    message_info = read_json('message_info')
 
     wechat_request = WechatRequest()
     try:
@@ -24,7 +24,7 @@ if __name__ == '__main__':
             # 如果是新增加的公众号
             if not id:
                 name2fakeid_dict[n] = wechat_request.name2fakeid(n)
-                handle_json('name2fakeid', data=name2fakeid_dict)
+                write_json('name2fakeid', data=name2fakeid_dict)
                 message_info[n] = {
                     'latest_time': "2000-01-01 00:00", # 默认一个很久远的时间
                     'blogs': [],
@@ -36,11 +36,11 @@ if __name__ == '__main__':
             message_info[n]['latest_time'] = time_now()
     except Exception as e:
         # 写入message_info，如果请求中间失败，及时写入
-        handle_json('message_info', data=message_info)
+        write_json('message_info', data=message_info)
         raise e
 
     # 写入message_info，如果请求顺利进行，则正常写入
-    handle_json('message_info', data=message_info)
+    write_json('message_info', data=message_info)
 
     # 每次更新时验证去重
     with minHashLSH() as minhash:

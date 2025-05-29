@@ -6,28 +6,17 @@
 # @Software    : Pycharm
 # @description : 微信公众号爬虫工具函数
 
-import requests
 import json
-from lxml import etree
-import time
-import datetime
-from util.util import handle_json, headers
+import re
 
-# 将js获取的时间id转化成真实时间，截止到分钟
-def jstime2realtime(jstime):
-    return (datetime.datetime.strptime("1970-01-01 08:00", "%Y-%m-%d %H:%M") + datetime.timedelta(
-        minutes=jstime // 60)).strftime("%Y-%m-%d %H:%M")
+import requests
 
-# 计算时间差
-def time_delta(time1, time2):
-    return datetime.datetime.strptime(time1,"%Y-%m-%d %H:%M") - datetime.datetime.strptime(time2,"%Y-%m-%d %H:%M")
-# 获取当前时间
-def time_now():
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+from util.util import headers, jstime2realtime, read_json, write_json
+
 
 class WechatRequest:
     def __init__(self):
-        id_info = handle_json('id_info')
+        id_info = read_json('id_info')
         self.headers = headers
         self.headers['Cookie'] = id_info['cookie']
         self.token = id_info['token']
@@ -110,7 +99,6 @@ class WechatRequest:
         return message_url
 
     def login(self):
-        import re
         from DrissionPage import ChromiumPage
 
         bro = ChromiumPage()
@@ -119,7 +107,10 @@ class WechatRequest:
         while 'token' not in bro.url:
             pass
 
-        token = re.search(r'token=(.*)', bro.url).group(1)
+        match = re.search(r'token=(.*)', bro.url)
+        if not match:
+            raise ValueError("无法在URL中找到token")
+        token = match.group(1)
         cookie = bro.cookies()
         cookie_str = ''
         for c in cookie:
@@ -131,7 +122,7 @@ class WechatRequest:
             'token': token,
             'cookie': cookie_str,
         }
-        handle_json('id_info', data=id_info)
+        write_json('id_info', data=id_info)
         bro.close()
 
     # 检查session和token是否过期
@@ -145,26 +136,9 @@ class WechatRequest:
         return False
 
     def sort_messages(self):
-        message_info = handle_json('message_info')
+        message_info = read_json('message_info')
 
         for k, v in message_info.items():
             v['blogs'].sort(key=lambda x: x['create_time'])
 
-        handle_json('message_info', data=message_info)
-
-
-if __name__ == '__main__':
-
-    # with open('./data/message_info.json', 'r', encoding='utf-8') as fp:
-    #     message_info = json.load(fp)
-    #
-    # fakeid2message_update('MzAxMjc3MjkyMg==', message_info['老刘说NLP']['blogs'])
-
-    wechat_request = WechatRequest()
-    # wechat_request.sort_messages()
-
-    # 测试登录
-    # wechat_request.login()
-
-    # 测试 name2fakeid
-    res = wechat_request.name2fakeid('央视新闻')
+        write_json('message_info', data=message_info)
