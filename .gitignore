@@ -1,0 +1,3 @@
+data/
+!data/name2fakeid.json
+*.pyc

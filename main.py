@@ -29,8 +29,9 @@ if __name__ == '__main__':
                     'latest_time': "2000-01-01 00:00", # 默认一个很久远的时间
                     'blogs': [],
                 }
+                id = name2fakeid_dict[n]
             # 如果latest_time非空（之前太久不发文章的），或者今天已经爬取过，则跳过
-            if message_info[n]['latest_time'] and time_delta(time_now(), message_info[n]['latest_time']).days < 1:
+            if message_info[n]['latest_time'] and time_delta(time_now(), message_info[n]['latest_time']).total_seconds()/3600 < 12:
                 continue
             message_info[n]['blogs'].extend(wechat_request.fakeid2message_update(id, message_info[n]['blogs']))
             message_info[n]['latest_time'] = time_now()
@@ -47,5 +48,5 @@ if __name__ == '__main__':
         minhash.write_vector()
 
     # 将message_info转换为md上传到个人博客系统
-    message2md(message_info)
-    single_message2md(message_info)
+    # message2md(message_info)
+    # single_message2md(message_info)

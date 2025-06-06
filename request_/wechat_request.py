@@ -9,6 +9,7 @@
 import json
 import re
 
+from loguru import logger
 import requests
 
 from util.util import headers, jstime2realtime, read_json, write_json
@@ -81,6 +82,9 @@ class WechatRequest:
         #     raise Exception('The number of requests is too fast, please try again later')
         messages = json.loads(response['publish_page'])['publish_list']
         for message_i in range(len(messages)):
+            if messages[message_i]['publish_info'] == '':
+                logger.warning(f"Empty publish_info for message index {message_i}, skipping.")
+                continue
             message = json.loads(messages[message_i]['publish_info'])
             if message['msgid'] in msgid_exist:
                 continue
