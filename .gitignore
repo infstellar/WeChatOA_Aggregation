@@ -1,5 +1,6 @@
-data/
+data/*
 !data/name2fakeid.json
 !data/message_info.json
 !data/message_detail_text.json
+!data/README.md
 *.pyc
